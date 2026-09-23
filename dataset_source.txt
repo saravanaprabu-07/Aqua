@@ -1,0 +1,60 @@
+AquaTrend - Dataset Source
+===========================
+
+Dataset name:
+Central Ground Water Board (CGWB) India - Quarterly Depth to Water Level Dataset
+(compiled by Tejasvi Hora, University of Waterloo, from official CGWB records)
+
+Original repository (public, downloadable):
+https://github.com/craigdsouza/cgwb
+Raw file used: data/CGWB_data_wide.csv
+
+Underlying authority / original data owner:
+Central Ground Water Board (CGWB), Government of India
+(official groundwater monitoring agency for India)
+
+Time period covered by raw file:
+May 1996 to January 2017 (quarterly readings: Jan / May / Aug / Nov)
+
+Raw file structure:
+One row per monitoring well. Columns = STATE, DISTRICT, LAT, LON, SITE_TYPE,
+WLCODE (well code), followed by one column per quarter (e.g. "May 1996",
+"Aug 1996", ...) containing the Depth to Water Level in metres below ground
+level (m bgl) for that well in that quarter.
+
+Processing applied to build data/groundwater_data.csv (see src/preprocessing.py):
+1. Reshaped ("melted") the wide well-level file into a long time-series format
+   (one row per well per quarter).
+2. Removed missing readings (marked "NA" in the source) and physically
+   impossible values (negative depth, or depth > 50 m, treated as data-entry
+   outliers).
+3. Aggregated well-level readings to DISTRICT level per quarter (mean depth
+   to water level across all reporting wells in that district), producing one
+   "location" = "STATE - DISTRICT" time series per quarter.
+4. Selected the 60 districts with the most complete quarterly history
+   (out of 522 districts nationwide) so the demo dataset is small enough to
+   explore in a hackathon setting while remaining 100% real CGWB
+   measurements (no invented values).
+
+Final processed dataset used by this project:
+data/groundwater_data.csv
+- Rows: 4,982
+- Locations (districts): 60
+- Period: May 1996 - Jan 2017 (quarterly)
+- Columns: STATE, DISTRICT, location, date, depth_to_water_level_m,
+  num_wells_reporting, lat, lon
+
+Important notes:
+- The core measured variable is "Depth to Water Level" in metres below
+  ground level (m bgl). A LARGER value means the water table is DEEPER
+  (i.e. groundwater level has gone DOWN / depleted). A SMALLER value means
+  the water table is closer to the surface (groundwater level is HIGHER).
+  This is the opposite direction of an intuitive "groundwater level" number,
+  so the dashboard clearly labels charts as "Depth to Water Level (m bgl)"
+  and describes rising depth as decline.
+- Rainfall, extraction and soil data were NOT available in this source and
+  were NOT fabricated. The model uses only genuine groundwater
+  time-series features (lags, rolling averages, seasonal/date features) as
+  instructed by the hackathon rules when auxiliary variables are unavailable.
+- num_wells_reporting is the number of individual CGWB wells averaged into
+  that district-quarter reading (data quality / confidence indicator).
